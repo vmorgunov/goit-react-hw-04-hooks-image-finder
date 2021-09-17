@@ -1,104 +1,82 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import Searchbar from 'components/Searchbar';
 import 'react-toastify/dist/ReactToastify.css';
 import ImageGallery from 'components/ImageGallery';
 import Modal from 'components/Modal';
 import Button from 'components/Button/Button';
 import Spinner from 'components/Loader/Loader';
-import fetchImage from 'service/ApiService';
+import fetchImages from 'service/ApiService';
 import { AppContainer } from 'App.styled';
 import { ToastContainer } from 'react-toastify';
 import { toast } from 'react-toastify';
 
-export default class App extends Component {
-  state = {
-    images: [],
-    searchQuery: '',
-    selectedImage: '',
-    isLoading: false,
-    page: 1,
-  };
+export default function App() {
+  const [images, setImages] = useState([]);
+  const [query, setQuery] = useState('');
+  const [selectedImage, setSelectedImage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [page, setPage] = useState(1);
 
-  componentDidUpdate(prevProps, prevState) {
-    const prevQuery = prevState.searchQuery;
-    const newQuery = this.state.searchQuery;
-    const prevPage = prevState.page;
-    const newPage = this.state.page;
-
-    if (prevQuery !== newQuery || prevPage !== newPage) {
-      this.fetchImages();
+  useEffect(() => {
+    if (!query) {
+      return;
     }
-  }
 
-  fetchImages = () => {
-    const { page, searchQuery } = this.state;
-    if (searchQuery !== undefined) {
-      this.setState({ isLoading: true });
+    fetchImages(query, page)
+      .then(data => {
+        if (data.hits.length === 0) {
+          toast.error(`Ooops, no match found.`);
+          return;
+        }
 
-      fetchImage(searchQuery, page)
-        .then(data => {
-          if (data.hits.length === 0) {
-            toast.error(`Ooops, no match found.`);
-            return;
-          }
+        setImages(prevState => [...prevState, ...data.hits]);
+      })
+      .catch(error => console.log(error.message))
+      .finally(() => {
+        setIsLoading(false);
+        handleScroll();
+      });
+  }, [query, page]);
 
-          this.setState(prevState => ({
-            images: [...prevState.images, ...data.hits],
-          }));
-        })
-        .catch(error => console.log(error.message))
-        .finally(() => {
-          this.setState({ isLoading: false });
-          this.handleScroll();
-        });
-    }
-  };
-
-  handleScroll = () => {
+  const handleScroll = () => {
     window.scrollTo({
       top: document.body.scrollHeight,
       behavior: 'smooth',
     });
   };
 
-  handleFormSubmit = searchQuery => {
-    this.setState({ searchQuery: searchQuery, images: [], page: 1 });
+  const handleFormSubmit = query => {
+    setQuery(query);
+    setImages([]);
+    setPage(1);
   };
 
-  handleSelectedImage = imageUrl => {
-    this.setState({ selectedImage: imageUrl });
+  const handleSelectedImage = imageUrl => {
+    setSelectedImage(imageUrl);
   };
 
-  handleModalClose = () => {
-    this.setState({ selectedImage: '' });
+  const handleModalClose = () => {
+    setSelectedImage('');
   };
 
-  handleBtnClick = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  const handleBtnClick = () => {
+    setPage(prevState => prevState + 1);
   };
 
-  render() {
-    const { selectedImage, isLoading, images } = this.state;
-    const showLoadButton = images.length > 0;
-    return (
-      <AppContainer>
-        <Searchbar onSubmit={this.handleFormSubmit} />
-        {isLoading && <Spinner />}
-        <ImageGallery images={images} onSelect={this.handleSelectedImage} />
-        {selectedImage && (
-          <Modal src={selectedImage} onClose={this.handleModalClose} />
-        )}
-        {showLoadButton && (
-          <Button
-            title="Load more"
-            handleBtnClick={this.handleBtnClick}
-          ></Button>
-        )}
+  const showLoadButton = images.length > 0;
+  return (
+    <AppContainer>
+      <Searchbar onSubmit={handleFormSubmit} />
+      {isLoading && <Spinner />}
+      <ImageGallery images={images} onSelect={handleSelectedImage} />
+      {selectedImage && (
+        <Modal src={selectedImage} onClose={handleModalClose} />
+      )}
+      {showLoadButton && (
+        <Button title="Load more" handleBtnClick={handleBtnClick}></Button>
+      )}
 
-        <ToastContainer autoClose={3000} />
-      </AppContainer>
-    );
-  }
+      <ToastContainer autoClose={3000} />
+    </AppContainer>
+  );
 }

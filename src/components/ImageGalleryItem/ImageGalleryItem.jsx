@@ -1,12 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { ImageGallery, ImageGalleryItemValue } from './ImageGalleryItem.styled';
+import { Image, Item } from './ImageGalleryItem.styled';
 
-const ImageGalleryItem = ({ webformatURL, alt, onSelect }) => (
-  <ImageGalleryItemValue>
-    <ImageGallery src={webformatURL} alt={alt} onClick={onSelect} />
-  </ImageGalleryItemValue>
+const ImageGalleryItem = ({ webformatURL, tag, onSelect }) => (
+  <Item>
+    <Image src={webformatURL} alt={tag} onClick={onSelect} />
+  </Item>
 );
 ImageGalleryItem.propTypes = {
   webformatURL: PropTypes.string,
