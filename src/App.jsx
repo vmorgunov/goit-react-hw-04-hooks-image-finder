@@ -21,7 +21,7 @@ export default function App() {
     if (!query) {
       return;
     }
-
+    setIsLoading(true);
     fetchImages(query, page)
       .then(data => {
         if (data.hits.length === 0) {
