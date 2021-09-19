@@ -31,14 +31,12 @@ export default function App() {
 
         setImages(prevState => [...prevState, ...data.hits]);
       })
-      .then(() => {
-        if (page > 1) {
-          handleScroll();
-        }
-      })
       .catch(error => console.log(error.message))
       .finally(() => {
         setIsLoading(false);
+        if (page > 1) {
+          handleScroll();
+        }
       });
   }, [query, page]);
 
